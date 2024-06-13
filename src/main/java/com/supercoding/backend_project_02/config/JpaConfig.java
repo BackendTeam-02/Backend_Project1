@@ -15,9 +15,9 @@ import java.util.Map;
 
 @Configuration
 @EnableJpaRepositories(
-        basePackages = {"com.supercoding.backend_project_02.repositoty.users",
-                "com.supercoding.backend_project_02.repositoty.posts",
-                "com.supercoding.backend_project_02.repositoty.comments",},
+        basePackages = {"com.supercoding.backend_project_02.repository.users",
+                "com.supercoding.backend_project_02.repository.posts",
+                "com.supercoding.backend_project_02.repository.comments",},
         entityManagerFactoryRef = "entityManagerFactoryBean1"
 )
 public class JpaConfig {
