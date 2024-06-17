@@ -13,4 +13,3 @@ public class DataSourceConfig {
     private String username;
     private String password;
 }
-

@@ -1,29 +1,23 @@
 package com.supercoding.backend_project_02.dto.comments;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CommentDto {
     private Long id;
+    private Integer post_id;
+
+    @NonNull
     private String content;
-    private LocalDateTime createdAt;
-//    private Long postId;
-//    private Long userId;
 
-    public CommentDto(Long id, String content, LocalDateTime createdAt) {
-        this.id = id;
-        this.content = content;
-        this.createdAt = createdAt;
-//        this.postId = postId;
-//        this.userId = userId;
-    }
+    private String author;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDateTime created_at;
 }
-

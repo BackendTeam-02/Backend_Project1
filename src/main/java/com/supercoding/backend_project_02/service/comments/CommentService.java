@@ -1,14 +1,15 @@
 package com.supercoding.backend_project_02.service.comments;
 
-
 import com.supercoding.backend_project_02.dto.comments.CommentDto;
 import com.supercoding.backend_project_02.entity.comments.Comment;
+import com.supercoding.backend_project_02.entity.posts.PostsEntity;
 import com.supercoding.backend_project_02.repository.comments.CommentRepository;
+import com.supercoding.backend_project_02.repository.posts.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,52 +18,74 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentService {
 
-    private final CommentRepository CommentRepository;
-   // private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
 
-    public List<Comment> findByPostid(long postId) {
-        return CommentRepository.findAllByPost_Id(postId);
+    public List<CommentDto> findByPostId(long postId) {
+        return commentRepository.findAllByPost_Id(postId)
+                                .stream()
+                                .map(this::convertToDto)
+                                .collect(Collectors.toList());
     }
 
-    public List<Comment> findAll() {
-        return CommentRepository.findAllBy();
+    public List<CommentDto> findAll() {
+        return commentRepository.findAll()
+                                .stream()
+                                .map(this::convertToDto)
+                                .collect(Collectors.toList());
     }
 
-    public void saveComment(CommentDto commentDTO) {
-        PostEntity post = postRepository.findById(commentDTO.getPost_id())
-                                        .orElseThrow(() -> new EntityNotFoundException("해당 ID의 게시물을 찾을 수 없습니다."));
+    public void saveComment(CommentDto commentDto) {
+        System.out.println("Saving comment for post_id: " + commentDto.getPost_id());
 
-        CommentEntity CommentEntity = TestPJ.entity.CommentEntity.builder()
-                                                                 .post(post)
-                                                                 .author(commentDTO.getAuthor()) // 수정
-                                                                 .content(commentDTO.getContent()) // 수정
-                                                                 .build();
+        PostsEntity postsEntity = postRepository.findById(commentDto.getPost_id())
+                                                .orElseThrow(() -> new EntityNotFoundException("해당 ID의 게시물을 찾을 수 없습니다."));
 
-        CommentRepository.save(CommentEntity);
+        Comment commentEntity = Comment.builder()
+                                       .post(postsEntity)
+                                       .author(commentDto.getAuthor())
+                                       .content(commentDto.getContent())
+                                       .created_at(LocalDateTime.now())
+                                       .build();
+
+        commentRepository.save(commentEntity);
     }
 
-    public Comment updateComment(CommentDto commentDto, long id) {
-        PostEntity post = postRepository.findById(commentDto.getPost_id()) // 수정
-                                        .orElseThrow(() -> new EntityNotFoundException("해당 ID의 게시물을 찾을 수 없습니다."));
-
-        Optional<Comment> existingComment = CommentRepository.findById(id);
+    public void updateCommentContent(long id, String content) {
+        Optional<Comment> existingComment = commentRepository.findById(id);
         if (existingComment.isPresent()) {
-            Comment CommentEntity = existingComment.get();
-            CommentEntity.setContent(commentDto.getContent()); // 수정
-            return CommentRepository.save(CommentEntity);
+            Comment commentEntity = existingComment.get();
+            commentEntity.setContent(content);
+            commentRepository.save(commentEntity);
         } else {
-            throw new ChangeSetPersister.NotFoundException("댓글을 찾을 수 없습니다."); // 적절한 예외 사용 확인
+            throw new EntityNotFoundException("댓글을 찾을 수 없습니다.");
         }
     }
 
-    public void deleteComment(CommentDto commentDTO, long id) {
-        Optional<Comment> existingComment = CommentRepository.findById(id);
-        if (existingComment.isPresent()) {
-            CommentEntity CommentEntity = existingComment.get();
-            CommentRepository.deleteById(CommentEntity.getId());
 
+    public void deleteComment(long id) {
+        Optional<Comment> existingComment = commentRepository.findById(id);
+        if (existingComment.isPresent()) {
+            commentRepository.deleteById(id);
         } else {
-            throw new ChangeSetPersister.NotFoundException("게시물을 찾을 수 없습니다.");
+            throw new EntityNotFoundException("댓글을 찾을 수 없습니다.");
         }
     }
 
+    public String getCommentAuthor(long id) {
+        return commentRepository.findById(id)
+                                .map(Comment::getAuthor)
+                                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+    }
+
+
+    private CommentDto convertToDto(Comment comment) {
+        return new CommentDto(
+                comment.getId(),
+                comment.getPost().getId(),
+                comment.getContent(),
+                comment.getAuthor(),
+                comment.getCreated_at()
+        );
+    }
+}
